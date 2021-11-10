@@ -121,6 +121,10 @@ Flag to mark a child node as being inactive. If set, no touch events will be fir
 - ``` fixed ``` **Boolean**
 Flag to mark a child node as being fixed. If set, this node will remain in it's original position and won't be affected by other nodes rearrangement.
 
+- `last` **Boolean**
+
+Flag to mark a child node as being the last Item. If set, this node will remain the last item in the order and won't be affected by other nodes rearrangement or when adding new item to list. You can also add multiple `last` nodes they will all stay in bottom.
+
 ## onDragRelease return value looks like this:
 
 ```

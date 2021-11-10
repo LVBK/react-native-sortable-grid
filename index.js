@@ -29,7 +29,7 @@ class Block extends Component {
       <TouchableWithoutFeedback
         style          = {{ flex: 1 }}
         delayLongPress = { this.props.delayLongPress }
-        onLongPress    = { () => (this.props.inactive || this.props.fixed) || this.props.onLongPress() }
+        onLongPress    = { () => (this.props.inactive || this.props.fixed || this.props.last) || this.props.onLongPress() }
         onPress        = { () => this.props.inactive || this.props.onPress() }>
 
           <View style={styles.itemImageContainer}>
@@ -65,6 +65,7 @@ class SortableGrid extends Component {
               deletionView = { this._getDeletionView(key) }
               inactive = { item.props.inactive }
               fixed = { item.props.fixed }
+              last ={ item.props.last }
             >
               {item}
             </Block>
@@ -175,7 +176,7 @@ class SortableGrid extends Component {
           let blockPosition = block.origin
           let distance = this._getDistanceTo(blockPosition)
 
-          if (distance < closestDistance && distance < this.state.blockWidth && !this.items[index].props.fixed) {
+          if (distance < closestDistance && distance < this.state.blockWidth && !(this.items[index].props.fixed || this.items[index].props.last)) {
             closest = index
             closestDistance = distance
           }
@@ -375,7 +376,7 @@ class SortableGrid extends Component {
 
   _blockPositionsSet = () => this.state.blockPositionsSetCount === this.items.length
 
-  _saveItemOrder = (items) => {
+  _originSaveItemOrder = (items) => {
     items.forEach( (item, index) => {
       const foundKey = _.findKey(this.itemOrder, oldItem => oldItem.key === item.key);
 
@@ -402,6 +403,54 @@ class SortableGrid extends Component {
       }
     })
   }
+
+  _saveItemOrder = (items) => {
+    items.forEach((item, index) => {
+      const foundKey = _.findKey(
+        this.itemOrder,
+        oldItem => oldItem.key === item.key
+      );
+      const fixedLast = _.findKey(this.items, q => q.props.last === true);
+      const fixedLastKey = fixedLast && this.items[fixedLast].key;
+      if (foundKey) {
+        this.items[foundKey] = item;
+      } else {
+        if (fixedLastKey) {
+          const lastItemIndex = this.itemOrder.findIndex(
+            q => q.key === fixedLastKey
+          );
+          const lastItem = this.itemOrder[lastItemIndex];
+          lastItem.order = this.items.length;
+          this.itemOrder.splice(lastItemIndex, 0, {
+            key: item.key,
+            ref: item.ref,
+            order: this.items.length - 1
+          });
+        } else {
+          this.itemOrder.push({
+            key: item.key,
+            ref: item.ref,
+            order: this.items.length
+          });
+        }
+
+        if (!this.initialLayoutDone) {
+          this.items.push(item);
+        } else {
+          let blockPositions = this.state.blockPositions;
+          let blockPositionsSetCount = ++this.state.blockPositionsSetCount;
+          let thisPosition = this.getNextBlockCoordinates();
+          blockPositions.push({
+            currentPosition: new Animated.ValueXY(thisPosition),
+            origin: thisPosition
+          });
+          this.items.push(item);
+          this.setState({ blockPositions, blockPositionsSetCount });
+          this.setGhostPositions();
+        }
+      }
+    });
+  };
 
   _removeDisappearedChildren = (items) => {
     let deleteBlockIndices = []
