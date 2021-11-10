@@ -29,7 +29,7 @@ class Block extends Component {
       <TouchableWithoutFeedback
         style          = {{ flex: 1 }}
         delayLongPress = { this.props.delayLongPress }
-        onLongPress    = { () => this.props.inactive || this.props.onLongPress() }
+        onLongPress    = { () => (this.props.inactive || this.props.fixed) || this.props.onLongPress() }
         onPress        = { () => this.props.inactive || this.props.onPress() }>
 
           <View style={styles.itemImageContainer}>
@@ -64,6 +64,7 @@ class SortableGrid extends Component {
               itemWrapperStyle = { this._getItemWrapperStyle(key) }
               deletionView = { this._getDeletionView(key) }
               inactive = { item.props.inactive }
+              fixed = { item.props.fixed }
             >
               {item}
             </Block>
@@ -174,7 +175,7 @@ class SortableGrid extends Component {
           let blockPosition = block.origin
           let distance = this._getDistanceTo(blockPosition)
 
-          if (distance < closestDistance && distance < this.state.blockWidth) {
+          if (distance < closestDistance && distance < this.state.blockWidth && !this.items[index].props.fixed) {
             closest = index
             closestDistance = distance
           }
